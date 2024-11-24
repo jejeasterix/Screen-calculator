@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Projector } from 'lucide-react';
 import { AspectRatioButton } from './AspectRatioButton';
 import { DimensionCard } from './DimensionCard';
@@ -47,12 +47,25 @@ export function ProjectorCalculator({
 }: ProjectorCalculatorProps) {
   const [minThrowRatio, setMinThrowRatio] = useState<number>(1.3);
   const [maxThrowRatio, setMaxThrowRatio] = useState<number>(1.7);
+  const [throwDistance, setThrowDistance] = useState<number | null>(null);
+
+  // Fonction utilitaire pour arrondir à 1 décimale
+  const roundToOneDecimal = (num: number): number => {
+    return Math.round(num * 10) / 10;
+  };
 
   const dimensions = calculateDimensionsFromInput(inputValue, dimensionType, aspectRatio);
 
-  // Calcul des distances de projection
-  const minDistance = dimensions.width * minThrowRatio;
-  const maxDistance = dimensions.width * maxThrowRatio;
+  // Calcul des distances de projection avec arrondis
+  const minDistance = roundToOneDecimal(dimensions.width * minThrowRatio);
+  const maxDistance = roundToOneDecimal(dimensions.width * maxThrowRatio);
+
+  // Mettre à jour la distance quand les ratios ou dimensions changent
+  useEffect(() => {
+    if (dimensions.width > 0 && minThrowRatio > 0) {
+      setThrowDistance(roundToOneDecimal(dimensions.width * minThrowRatio));
+    }
+  }, [dimensions.width, minThrowRatio]);
 
   return (
     <div className="bg-white rounded-2xl shadow-xl">
@@ -109,12 +122,35 @@ export function ProjectorCalculator({
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
+                Distance de projection (cm)
+              </label>
+              <input
+                type="number"
+                value={throwDistance || ''}
+                onChange={(e) => {
+                  const distance = e.target.value === '' ? null : roundToOneDecimal(parseFloat(e.target.value));
+                  setThrowDistance(distance);
+                  if (distance && distance > 0 && dimensions.width > 0) {
+                    const ratio = roundToOneDecimal(distance / dimensions.width);
+                    setMinThrowRatio(ratio);
+                    setMaxThrowRatio(ratio);
+                  }
+                }}
+                step="0.1"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
                 Ratio de projection min
               </label>
               <input
                 type="number"
-                value={minThrowRatio}
-                onChange={(e) => setMinThrowRatio(parseFloat(e.target.value) || 0)}
+                value={minThrowRatio.toFixed(1)}
+                onChange={(e) => setMinThrowRatio(roundToOneDecimal(parseFloat(e.target.value) || 0))}
                 step="0.1"
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
               />
@@ -125,8 +161,8 @@ export function ProjectorCalculator({
               </label>
               <input
                 type="number"
-                value={maxThrowRatio}
-                onChange={(e) => setMaxThrowRatio(parseFloat(e.target.value) || 0)}
+                value={maxThrowRatio.toFixed(1)}
+                onChange={(e) => setMaxThrowRatio(roundToOneDecimal(parseFloat(e.target.value) || 0))}
                 step="0.1"
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
               />
@@ -153,12 +189,12 @@ export function ProjectorCalculator({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <DimensionCard
               label="Distance minimale"
-              value={minDistance}
+              value={roundToOneDecimal(minDistance)}
               isMetric={isMetric}
             />
             <DimensionCard
               label="Distance maximale"
-              value={maxDistance}
+              value={roundToOneDecimal(maxDistance)}
               isMetric={isMetric}
             />
           </div>
@@ -185,6 +221,8 @@ export function ProjectorCalculator({
             }}
             bottomHeight={bottomHeight}
             isMetric={isMetric}
+            minThrowRatio={minThrowRatio}
+            maxThrowRatio={maxThrowRatio}
           />
         </div>
       </div>

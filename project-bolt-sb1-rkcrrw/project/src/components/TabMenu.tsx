@@ -4,6 +4,7 @@ import { Monitor, Projector } from 'lucide-react';
 import { ScreenCalculator } from './ScreenCalculator';
 import { ProjectorCalculator } from './ProjectorCalculator';
 import { RoomDimensions } from './RoomDimensions';
+import { Logo } from './Logo';
 
 function classNames(...classes: string[]) {
   return classes.filter(Boolean).join(' ');
@@ -65,46 +66,52 @@ export function TabMenu() {
   ];
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <Tab.Group>
-        <Tab.List className="flex space-x-1 rounded-xl bg-blue-900/20 p-1">
-          {categories.map((category) => {
-            const Icon = category.icon;
-            return (
-              <Tab
-                key={category.name}
-                className={({ selected }) =>
-                  classNames(
-                    'w-full rounded-lg py-2.5 text-sm font-medium leading-5',
-                    'ring-white/60 ring-offset-2 ring-offset-blue-400 focus:outline-none focus:ring-2',
-                    selected
-                      ? 'bg-white text-blue-700 shadow'
-                      : 'text-blue-100 hover:bg-white/[0.12] hover:text-white'
-                  )
-                }
+    <>
+      <div className="fixed top-0 left-0 right-0 z-50 bg-white shadow-md">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <Tab.Group>
+            <Tab.List className="flex space-x-1 rounded-xl bg-indigo-900/20 p-1 relative">
+              <Logo />
+              {categories.map((category) => (
+                <Tab
+                  key={category.name}
+                  className={({ selected }) =>
+                    classNames(
+                      'w-full rounded-lg py-2.5 text-sm font-medium leading-5',
+                      'ring-white ring-opacity-60 ring-offset-2 ring-offset-indigo-400 focus:outline-none focus:ring-2',
+                      selected
+                        ? 'bg-white shadow text-indigo-700'
+                        : 'text-indigo-700 hover:bg-white/[0.12] hover:text-indigo-800'
+                    )
+                  }
+                >
+                  <div className="flex items-center justify-center gap-2">
+                    {React.createElement(category.icon, { className: 'w-5 h-5' })}
+                    {category.name}
+                  </div>
+                </Tab>
+              ))}
+            </Tab.List>
+          </Tab.Group>
+        </div>
+      </div>
+      <div className="pt-16">
+        <Tab.Group>
+          <Tab.Panels>
+            {categories.map((category, idx) => (
+              <Tab.Panel
+                key={idx}
+                className={classNames(
+                  'rounded-xl bg-white p-4',
+                  'ring-white ring-opacity-60 ring-offset-2 ring-offset-indigo-400 focus:outline-none focus:ring-2'
+                )}
               >
-                <div className="flex items-center justify-center space-x-2">
-                  <Icon className="h-5 w-5" />
-                  <span>{category.name}</span>
-                </div>
-              </Tab>
-            );
-          })}
-        </Tab.List>
-        <Tab.Panels className="mt-8">
-          {categories.map((category) => (
-            <Tab.Panel
-              key={category.name}
-              className={classNames(
-                'rounded-xl bg-white p-3',
-                'ring-white/60 ring-offset-2 ring-offset-blue-400 focus:outline-none focus:ring-2'
-              )}
-            >
-              {category.content}
-            </Tab.Panel>
-          ))}
-        </Tab.Panels>
-      </Tab.Group>
-    </div>
+                {category.content}
+              </Tab.Panel>
+            ))}
+          </Tab.Panels>
+        </Tab.Group>
+      </div>
+    </>
   );
 }

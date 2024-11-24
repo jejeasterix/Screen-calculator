@@ -40,9 +40,14 @@ export function RoomVisualizationVP({
     wallBottom: number;
   }>({ wallLeft: 0, wallRight: 0, wallTop: 0, wallBottom: 0 });
 
+  // Fonction pour convertir les valeurs selon l'unité
+  const convertValue = (value: number): number => {
+    return isMetric ? value : value * 2.54;
+  };
+
   // Fonction pour formater la mesure avec les deux unités
   const formatMeasurement = (value: number) => {
-    const metricValue = isMetric ? value : value * 2.54;
+    const metricValue = convertValue(value);
     const imperialValue = isMetric ? value / 2.54 : value;
     return `${metricValue.toFixed(1)}cm / ${imperialValue.toFixed(1)}"`;
   };
@@ -79,6 +84,26 @@ export function RoomVisualizationVP({
     ctx.restore();
   };
 
+  // Fonction pour dessiner du texte
+  const drawText = (
+    ctx: CanvasRenderingContext2D,
+    text: string,
+    x: number,
+    y: number
+  ) => {
+    ctx.fillStyle = '#4B5563';
+    ctx.font = '14px Inter';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'top';
+    ctx.fillText(text, x, y);
+  };
+
+  // Fonction pour dessiner l'écran
+  const drawScreen = (ctx: CanvasRenderingContext2D, dimensions: { width: number; height: number }) => {
+    const wallWidthPixels = imageRef.current.wallRight - imageRef.current.wallLeft;
+    const wallHeightPixels = imageRef.current.wallBottom - imageRef.current.wallTop;
+  };
+
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -105,32 +130,25 @@ export function RoomVisualizationVP({
       const scaleX = wallWidthPixels / roomDimensions.width;
       const scaleY = wallHeightPixels / roomDimensions.height;
 
+      // Effacer le canvas
       ctx.clearRect(0, 0, canvas.width, canvas.height);
+
       ctx.drawImage(backgroundImage, 0, 0);
 
       // Afficher la largeur en haut
       drawTextWithIcon(
         ctx,
-        formatMeasurement(roomDimensions.width),
+        formatMeasurement(screenDimensions.width),
         imageRef.current.wallLeft + wallWidthPixels / 25,
         imageRef.current.wallTop + 400,
         dimensionIcons.width
-      );
-
-      // Afficher la profondeur à droite
-      drawTextWithIcon(
-        ctx,
-        formatMeasurement(roomDimensions.depth),
-        imageRef.current.wallRight + 40,
-        imageRef.current.wallTop + wallHeightPixels / 2,
-        dimensionIcons.depth
       );
 
       // Afficher la hauteur de la salle à droite
       drawTextWithIcon(
         ctx,
         `${roomDimensions.height.toFixed(1)} cm`,
-        imageRef.current.wallRight + 200,
+        imageRef.current.wallRight - 500,
         imageRef.current.wallTop + wallHeightPixels / 2,
         dimensionIcons.height,
         Math.PI / 2
@@ -157,24 +175,28 @@ export function RoomVisualizationVP({
       );
 
       // Afficher la distance de projection minimale
-      const minDistance = screenDimensions.width * minThrowRatio;
-      drawTextWithIcon(
-        ctx,
-        `${minDistance.toFixed(1)} cm`,
-        imageRef.current.wallLeft + wallWidthPixels / 4,
-        imageRef.current.wallTop + 200,
-        dimensionIcons.depth
-      );
+      const minDistance = minThrowRatio ? screenDimensions.width * minThrowRatio : 0;
+      if (minDistance > 0) {
+        drawTextWithIcon(
+          ctx,
+          `Mini : ${(isMetric ? minDistance : minDistance * 2.54).toFixed(1)} cm`,
+          imageRef.current.wallLeft + 650,
+          imageRef.current.wallTop + 400,
+          dimensionIcons.depth
+        );
+      }
 
       // Afficher la distance de projection maximale
-      const maxDistance = screenDimensions.width * maxThrowRatio;
-      drawTextWithIcon(
-        ctx,
-        `${maxDistance.toFixed(1)} cm`,
-        imageRef.current.wallLeft + wallWidthPixels / 4,
-        imageRef.current.wallTop + 300,
-        dimensionIcons.depth
-      );
+      const maxDistance = maxThrowRatio ? screenDimensions.width * maxThrowRatio : 0;
+      if (maxDistance > 0) {
+        drawTextWithIcon(
+          ctx,
+          `Maxi : ${(isMetric ? maxDistance : maxDistance * 2.54).toFixed(1)} cm`,
+          imageRef.current.wallLeft + 650,
+          imageRef.current.wallTop + 450,
+          dimensionIcons.depth
+        );
+      }
 
       // Afficher les mesures de hauteur du bas seulement si bottomHeight est défini
       if (bottomHeight !== null) {
@@ -190,6 +212,9 @@ export function RoomVisualizationVP({
           Math.PI / 2
         );
       }
+
+      // Dessiner l'écran
+      drawScreen(ctx, screenDimensions);
     };
   }, [roomDimensions, screenDimensions, bottomHeight, isMetric, minThrowRatio, maxThrowRatio]);
 
